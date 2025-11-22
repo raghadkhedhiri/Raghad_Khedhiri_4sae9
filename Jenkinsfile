@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK17'       // le nom que tu as mis dans "Manage Jenkins > Tools"
-        maven 'Maven3'    // idem pour Maven
+        jdk 'JDK17'
+        maven 'Maven3'
     }
 
     stages {
@@ -14,10 +14,15 @@ pipeline {
             }
         }
 
-        stage('Build & Package') {
+        stage('Tests') {
             steps {
-                
-                sh 'mvn -B clean package -DskipTests'
+                sh 'mvn -B test'
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh 'mvn -B package'
             }
         }
     }
