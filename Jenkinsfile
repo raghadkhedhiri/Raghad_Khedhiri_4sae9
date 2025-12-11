@@ -2,11 +2,17 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK17'
-        maven 'Maven3'
+        jdk   'JDK17'    // défini dans Manage Jenkins > Global Tool Configuration
+        maven 'Maven3'   // idem
+    }
+
+    environment {
+        IMAGE_NAME = 'raghadkhedhiri/student-management'
+        IMAGE_TAG  = '1.3'            // même version que ton docker build manuel
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -14,15 +20,61 @@ pipeline {
             }
         }
 
-        stage('Tests') {
+        stage('Build & Test') {
             steps {
-                sh 'mvn -B test'
+                sh 'mvn -B clean test'
             }
         }
 
-        stage('Package') {
+        stage('Package JAR') {
             steps {
                 sh 'mvn -B package'
+            }
+        }
+
+        stage('Archive livrable') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh """
+                    docker build \
+                      -t ${IMAGE_NAME}:${IMAGE_TAG} \
+                      .
+                """
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-cred',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Run Container (test)') {
+            steps {
+                sh '''
+                    docker rm -f student-management || true
+
+                    docker run -d --name student-management \
+                      -p 8081:8080 \
+                      ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
             }
         }
     }
