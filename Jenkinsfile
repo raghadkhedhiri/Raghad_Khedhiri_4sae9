@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'raghadkhedhiri/student-management'
-        IMAGE_TAG  = '1.3'            // même version que ton docker build manuel
+        IMAGE_TAG  = '1.3'     // même version que ton docker build manuel
     }
 
     stages {
@@ -23,6 +23,22 @@ pipeline {
         stage('Build & Test') {
             steps {
                 sh 'mvn -B clean test'
+            }
+        }
+
+        stage('MVN SONARQUBE') {
+            steps {
+                withSonarQubeEnv('sonarqube-local') {
+                    withCredentials([
+                        string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')
+                    ]) {
+                        sh '''
+                            mvn -B sonar:sonar \
+                              -Dsonar.projectKey=student-management \
+                              -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
+                }
             }
         }
 
@@ -57,24 +73,22 @@ pipeline {
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker logout
-                    '''
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+                    sh 'docker logout'
                 }
             }
         }
 
         stage('Run Container (test)') {
             steps {
-                sh '''
+                sh """
                     docker rm -f student-management || true
 
                     docker run -d --name student-management \
-                      -p 8081:8080 \
+                      -p 8080:8080 \
                       ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
+                """
             }
         }
     }
