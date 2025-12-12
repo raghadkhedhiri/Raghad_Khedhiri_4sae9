@@ -27,7 +27,7 @@ pipeline {
 
         stage('MVN SONARQUBE') {
             steps {
-                withSonarQubeEnv('sonarqube-local') {
+                withSonarQubeEnv('SonarQube') {
                         sh '''
                             mvn -B sonar:sonar \
                               -Dsonar.projectKey=student-management \
