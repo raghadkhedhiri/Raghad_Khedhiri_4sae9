@@ -1,0 +1,26 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/focal64"
+
+  # Réseau: IP fixe pour accéder depuis Windows
+  config.vm.network "private_network", ip: "192.168.33.10"
+
+  # (Optionnel) Redirections si tu préfères localhost Windows
+  config.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true
+  config.vm.network "forwarded_port", guest: 9000, host: 9000, auto_correct: true
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "student-management-vm"
+
+    # RAM: mets 6144 ou 8192 (8GB si ton PC le supporte)
+    vb.memory = 8192
+
+    # CPU: tu as 2 (nproc = 2), donc:
+    vb.cpus = 2
+  end
+
+  # (Optionnel) Provision basique + sysctl utile à Elasticsearch/SonarQube
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo sysctl -w vm.max_map_count=262144
+    echo "vm.max_map_count=262144" | sudo tee /etc/sysctl.d/99-sonarqube.conf >/dev/null
+  SHELL
+end

@@ -22,17 +22,20 @@ pipeline {
         stage('Build & Test') {
             steps {
                 sh 'mvn -B clean test'
+                sh 'ls -l target/site/jacoco/jacoco.xml || true'
             }
         }
 
-        stage('MVN SONARQUBE') {
+        stage('SonarQube') {
             steps {
-                withSonarQubeEnv('SonarQube') {
+                withSonarQubeEnv('sonarqube-local') {
+                    withCredentials([string(credentialsId: 'sonar-token-2', variable: 'SONAR_TOKEN')]) {
                         sh '''
-                            mvn -B sonar:sonar \
-                              -Dsonar.projectKey=student-management \
-                              -Dsonar.token=$SONAR_TOKEN
+                          mvn -B sonar:sonar \
+                            -Dsonar.projectKey=student-management \
+                            -Dsonar.token=$SONAR_TOKEN
                         '''
+                    }
                 }
             }
         }
@@ -51,9 +54,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh """
-                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                """
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
