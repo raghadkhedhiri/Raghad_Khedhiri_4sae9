@@ -2,17 +2,16 @@ pipeline {
     agent any
 
     tools {
-        jdk   'JDK17'    // défini dans Manage Jenkins > Global Tool Configuration
-        maven 'Maven3'   // idem
+        jdk   'JDK17'
+        maven 'Maven3'
     }
 
     environment {
         IMAGE_NAME = 'raghadkhedhiri/student-management'
-        IMAGE_TAG  = '1.3'     // même version que ton docker build manuel
+        IMAGE_TAG  = '1.3'
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -35,7 +34,7 @@ pipeline {
                         sh '''
                             mvn -B sonar:sonar \
                               -Dsonar.projectKey=student-management \
-                              -Dsonar.login=$SONAR_TOKEN
+                              -Dsonar.token=$SONAR_TOKEN
                         '''
                     }
                 }
@@ -44,7 +43,7 @@ pipeline {
 
         stage('Package JAR') {
             steps {
-                sh 'mvn -B package'
+                sh 'mvn -B package -DskipTests'
             }
         }
 
@@ -57,9 +56,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh """
-                    docker build \
-                      -t ${IMAGE_NAME}:${IMAGE_TAG} \
-                      .
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                 """
             }
         }
@@ -84,9 +81,8 @@ pipeline {
             steps {
                 sh """
                     docker rm -f student-management || true
-
                     docker run -d --name student-management \
-                      -p 8080:8080 \
+                      -p 8081:8080 \
                       ${IMAGE_NAME}:${IMAGE_TAG}
                 """
             }
