@@ -25,7 +25,7 @@
         <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
         <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
-        <!-- Keep analysis exclusions minimal (do NOT exclude *Application.java if you want coverage exclusions only) -->
+        <!-- Keep analysis e xclusions minimal (do NOT exclude *Application.java if you want coverage exclusions only) -->
         <sonar.exclusions>
             **/target/**,
             **/generated/**
