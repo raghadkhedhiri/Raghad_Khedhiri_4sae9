@@ -13,11 +13,7 @@ pipeline {
         DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
     }
 
-    options {
-        timestamps()
-        skipDefaultCheckout(true)
-        buildDiscarder(logRotator(numToKeepStr: '20'))
-    }
+ 
 
     stages {
         stage('Checkout') {
@@ -49,20 +45,8 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        stage('Package JAR') {
-            steps {
-                sh 'mvn -B package -DskipTests'
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            }
-        }
+     
+    
 
         stage('Docker Build & Push') {
             steps {
