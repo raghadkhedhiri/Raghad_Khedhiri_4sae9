@@ -104,11 +104,18 @@ pipeline {
       set -e
       kubectl -n devops set image deployment/spring-app \
         spring-app=${IMAGE_NAME}:${IMAGE_TAG}
-      kubectl -n devops rollout status deployment/spring-app --timeout=180s
-      kubectl -n devops get pods -l app=spring-app -o wide
+           echo 'Applying Deployments...'
+                // Using 'sh' instead of 'bat'
+                sh 'kubectl apply -f mysql-deployment.yaml -n devops'
+                sh 'kubectl apply -f spring-deployment.yaml -n devops'
+
+                echo 'Restarting Spring Pods...'
+                sh 'kubectl rollout restart deployment/spring-app -n devops'
+ 
     """
   }
-}
+}    // kubectl -n devops rollout status deployment/spring-app --timeout=180s
+    //  kubectl -n devops get pods -l app=spring-app -o wide
 
 
     stage('Run Container (test)') {
